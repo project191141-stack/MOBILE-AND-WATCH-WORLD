@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Entry - Mobile Watch World</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; padding: 20px; max-width: 800px; margin: 0 auto; background: #fff; }
+        .nav-bar { display: flex; justify-content: space-between; margin-bottom: 20px; }
+        .btn-nav { padding: 10px 20px; background: #666; color: white; text-decoration: none; font-weight: bold; border: none; cursor: pointer; }
+        .btn-logout { background: #d32f2f; }
+        
+        h1 { text-align: center; text-transform: uppercase; margin-bottom: 30px; }
+        
+        .forms-container { display: flex; flex-direction: column; gap: 30px; }
+        .form-box { border: 3px solid #000; padding: 25px; background: white; }
+        .form-header { font-size: 1.2rem; font-weight: bold; text-transform: uppercase; margin-bottom: 15px; text-decoration: underline; text-align: center; }
+        
+        .input-group { margin-bottom: 15px; }
+        label { display: block; font-size: 0.8rem; font-weight: bold; margin-bottom: 5px; text-transform: uppercase; }
+        input { padding: 10px; border: 1px solid #ccc; width: 100%; box-sizing: border-box; font-size: 1rem; }
+        .row { display: flex; gap: 15px; }
+        .row .input-group { flex: 1; }
+
+        button.submit-btn { width: 100%; padding: 12px; border: none; font-weight: bold; text-transform: uppercase; cursor: pointer; color: white; margin-top: 10px; }
+        .btn-sale { background-color: #000; }
+        .btn-exp { background-color: #000; }
+        .btn-sale:hover, .btn-exp:hover { opacity: 0.8; }
+    </style>
+</head>
+<body>
+
+    <div class="nav-bar">
+        <a href="dashboard.html" class="btn-nav">← BACK TO DASHBOARD</a>
+        <button onclick="logout()" class="btn-nav btn-logout">LOGOUT</button>
+    </div>
+
+    <h1>Add Transactions</h1>
+
+    <div class="forms-container">
+        <div class="form-box">
+            <div class="form-header">Add Income (Sale)</div>
+            <div class="input-group"><label>Item Name</label><input type="text" id="saleItem" placeholder="e.g. iPhone 13"></div>
+            <div class="row">
+                <div class="input-group"><label>Price</label><input type="number" id="salePrice" placeholder="0.00"></div>
+                <div class="input-group"><label>Date</label><input type="date" id="saleDate"></div>
+            </div>
+            <button class="submit-btn btn-sale" onclick="addSale()">ADD SALE</button>
+        </div>
+
+        <div class="form-box">
+            <div class="form-header">Add Expenditure</div>
+            <div class="input-group"><label>Reason / Item</label><input type="text" id="expItem" placeholder="e.g. Shop Rent"></div>
+            <div class="row">
+                <div class="input-group"><label>Cost</label><input type="number" id="expPrice" placeholder="0.00"></div>
+                <div class="input-group"><label>Date</label><input type="date" id="expDate"></div>
+            </div>
+            <button class="submit-btn btn-exp" onclick="addExpense()">ADD EXPENSE</button>
+        </div>
+    </div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getDatabase, ref, push } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+    import { getAuth, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyA__gk4XftwQZ_UlqI6WwrO0Quxre_2nuY",
+      authDomain: "mobile-and-watch-world.firebaseapp.com",
+      databaseURL: "https://mobile-and-watch-world-default-rtdb.firebaseio.com",
+      projectId: "mobile-and-watch-world",
+      storageBucket: "mobile-and-watch-world.firebasestorage.app",
+      messagingSenderId: "621266068216",
+      appId: "1:621266068216:web:8f4fc8bfd5c12c0b18110d",
+      measurementId: "G-7ZLPQTBY6C"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+    const auth = getAuth(app);
+
+    onAuthStateChanged(auth, (user) => {
+        if (!user) window.location.href = "login.html";
+    });
+
+    window.logout = () => signOut(auth).then(() => window.location.href = "login.html");
+
+    // Set default dates
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('saleDate').value = today;
+    document.getElementById('expDate').value = today;
+
+    window.addSale = () => handleTransaction('sale');
+    window.addExpense = () => handleTransaction('expense');
+
+    function handleTransaction(type) {
+        const prefix = type === 'sale' ? 'sale' : 'exp';
+        const name = document.getElementById(prefix + 'Item').value;
+        const price = document.getElementById(prefix + 'Price').value;
+        const date = document.getElementById(prefix + 'Date').value;
+
+        if(!name || !price || !date) return alert("Please fill all fields");
+
+        push(ref(db, 'transactions'), {
+            name, 
+            price: parseFloat(price), 
+            type, 
+            date, 
+            timestamp: Date.now()
+        }).then(() => {
+            alert(type === 'sale' ? "Sale Added!" : "Expense Added!");
+            // Clear inputs
+            document.getElementById(prefix + 'Item').value = '';
+            document.getElementById(prefix + 'Price').value = '';
+        });
+    }
+</script>
+</body>
+</html>
